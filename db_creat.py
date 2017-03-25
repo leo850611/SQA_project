@@ -20,7 +20,7 @@ def school_db():
         curs.execute('INSERT INTO school (snumber,sname) VALUES(?,?)', (school.text.split(' ')[0],school.text.split(' ')[1]))
     conn.commit()    
     curs.execute('SELECT * from school ORDER BY snumber')
-    print(curs.fetchall()) #(1, '國立臺灣大學')
+    print(curs.fetchall()) ##(1, '國立臺灣大學')
 
     for school_num in school_list:
         #科系代號及名稱
@@ -28,59 +28,72 @@ def school_db():
         department_soup = BeautifulSoup(department_page.text, "html.parser")
         department_num = department_soup.findAll('a',{'class':'d-block'})
         for department in department_num:
-            if(department.text != '清華學院學士班'): #校系代碼重複 http://freshman.tw/cross/106/011412
+            try: ##011412
                 curs.execute('INSERT INTO department (snum,dnumber,dname) VALUES(?,?,?)', (int(school_num[0]),str(department)[25:31],department.text))            
+            except:
+                pass
     conn.commit() 
     curs.execute('SELECT * from department ORDER BY dnumber')
-    print(curs.fetchall()) #(153, '153172', '都市計畫與景觀學系')
+    print(curs.fetchall()) ##(153, '153172', '都市計畫與景觀學系')
     
     
 if __name__ == '__main__':
     conn = sqlite3.connect('106.db')
     curs = conn.cursor()
-    #school_db()
-    #curs.execute('CREATE TABLE person(pnumber INT, area CHAR(4),place CHAR(4), pschool VARCHAR(20), pdepartment VARCHAR(50))')
+    school_db()
     
-    department_list = curs.execute('SELECT * from department ORDER BY dnumber')
-
+    reg = r'<span class="number">(\d+)</span><div style="font-size:12px;">([^0-9]+)-([^0-9]+)考區</div></td>' ##10206020,中部,彰化
+    get_value = re.compile(reg)
+    curs.execute('CREATE TABLE person(pnumber INT, dnumber CHAR(6), pschool VARCHAR(20), pdepartment VARCHAR(50))')
+    curs.execute('CREATE TABLE place(pnum INT, area CHAR(4),local CHAR(4))')
+    curs.execute('SELECT * from department ORDER BY dnumber')
+    department_list = curs.fetchall()
     id_list = []
     
-    reg = r'<span class="number">(\d+)</span><div style="font-size:12px;">([^0-9]+)-([^0-9]+)考區</div></td>' #10206020,中部,彰化
-    get_value = re.compile(reg)
-    
     for dnum in department_list:
-        print(dnum[1])
         print(dnum)
-        if(('音樂'not in dnum[2])and (int(dnum[1])>= 35182 )):
-            time.sleep(1)
+        page_id = dnum[1]
+        if(('音樂'not in dnum[2]) and (int(page_id)>= 0 )):
             #學生及通過校系
             student = requests.get('http://freshman.tw/cross/106/'+ dnum[1])
             student_soup = BeautifulSoup(student.text, "html.parser")
-            #准考證號,通過校系,校系數
+            page_title = student_soup.title.text
+            #准考證號,通過校系,校系數量
             number = student_soup.findAll('span',{'class':'number'})
-            department = student_soup.table.findAll('a',{'href':re.compile("^\d{6}") })
+            department = student_soup.table.findAll('a') #,{'href':re.compile("^\d{6}") }
             count = student_soup.findAll('span',{'style':'display:none'})
-            #含區域考生
+            
+            #含區域資料學生
             student_value = get_value.findall(student.content.decode("utf-8"))
             for s in student_value:
-                #print(s[0],s[1],s[2])
-                pass
+                if(s[0] not in id_list):
+                    ##('10006201', '北部', '台北')
+                    curs.execute('INSERT INTO place (pnum,area,local) VALUES(?,?,?)', (int(s[0]), s[1], s[2]) )
  
+            #准考證號
             number_list = []
             for n in number:
                 number_list.append(n.text)
             assert len(number_list)== len(count), '准考證號資料比數與清單不符'
-            
-            #通過校系及數目
-            for d in department:
-                #print(str(d)[9:15] + d.text.split(' ')[0] + d.text.split(' ')[1])
-                pass
+            #通過校系數目
             all_count = 0
+            count_list = []
             for c in count:
+                count_list.append(int(c.text))
                 all_count = all_count + int(c.text)
-            assert len(department) + len(number_list) == all_count, '總系所數目錯誤'
-
-    #curs.execute('INSERT INTO student (id,area,place) VALUES(?,?,?)', (number,)) 
-    
+            assert len(department) == all_count, '總系所數目錯誤'
+            
+            i = 0
+            for d in department:
+                count_list[i] = count_list[i] - 1
+                #print(number_list[i], str(d)[9:15], d.text.split(' ')[0], d.text.split(' ')[1])
+                if(number_list[i] not in id_list):
+                    curs.execute('INSERT INTO person (pnumber,dnumber,pschool,pdepartment) VALUES(?,?,?,?)', (number_list[i], str(d)[9:15], d.text.split(' ')[0], d.text.split(' ')[1]) )
+                    id_list.append(number_list[i])
+                if(count_list[i] == 0):
+                    i = i+1
+            print(id_list)
+            time.sleep(3)
+        conn.commit()
     curs.close()
     conn.close()
