@@ -76,13 +76,16 @@ def student_db():
             
             i = 0
             for d in department:
-                count_list[i] = count_list[i] - 1
+                count_list[i] = count_list[i] - 1                
                 if(number_list[i] not in id_list):
-                    curs.execute('INSERT INTO person (pnumber,dnumber,pschool,pdepartment) VALUES(?,?,?,?)', (number_list[i], str(d)[9:15], d.text.split(' ')[0], d.text.split(' ')[1]))
-                    id_list.append(number_list[i])
+                    if(str(d)[9]=='#'):
+                        curs.execute('INSERT INTO person (pnumber,dnumber,pschool,pdepartment) VALUES(?,?,?,?)', (number_list[i], dnum[1], d.text.split(' ')[0], d.text.split(' ')[1]))
+                    else:
+                        curs.execute('INSERT INTO person (pnumber,dnumber,pschool,pdepartment) VALUES(?,?,?,?)', (number_list[i], str(d)[9:15], d.text.split(' ')[0], d.text.split(' ')[1]))
                 if(count_list[i] == 0):
+                    id_list.append(number_list[i])
                     i = i+1
-            time.sleep(3)
+            time.sleep(2)
         conn.commit()
 
 
