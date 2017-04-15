@@ -1,4 +1,4 @@
-﻿# coding=utf-8
+# coding=utf-8
 from flask import Flask,url_for,request,render_template,session,redirect,escape,send_from_directory
 import sqlite3
 import requests
@@ -9,7 +9,7 @@ import re
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'download'
-secretkey = 'Google reCAPTCHA key'
+secretkey = '6LdGuRwUAAAAACwXQc-Vrq0vJVz8YbmuhW3XA6NP' #Google reCAPTCHA key
 
 
 @app.route('/' , methods = ['GET', 'POST'])
@@ -46,10 +46,19 @@ def index():
         return 'Username : %s ' % escape(session['username']) + render_template('classtable.html')
     else:
         return redirect(url_for('login'))
+
+@app.route('/course' , methods = ['GET', 'POST'])
+def course():
+    if ('username' in session) : 
+        if  request.method == 'POST' : 
+            return alertmsg('尚未開放，敬請期待~')
+        return 'Username : %s ' % escape(session['username']) + render_template('course.html')
+    else:
+        return redirect(url_for('login'))
     
 @app.route ( '/about' ) 
 def about(): 
-    return 'The about page'
+    return render_template('about.html')
     
 @app.route ( '/login', methods = ['GET', 'POST']) 
 def  login (): 
@@ -72,22 +81,16 @@ def  login ():
                 return redirect(url_for('index'))
     return render_template ('login.html')
 
-    
 @app.route ( '/logout' ) 
 def logout (): 
     session.pop('username', None) 
     return redirect(url_for('login'))
 
+    
 @app.route ( '/register', methods = ['GET', 'POST'])    
 def register():
-    google = {
-        'secret' : secretkey,
-        'response' : ''
-    }
-    if  request.method == 'POST' : 
-        google['response'] = request.form['g-recaptcha-response']
-        captcha = requests.post("https://www.google.com/recaptcha/api/siteverify", data = google)
-        if ('true' in captcha.text): #True
+    if request.method == 'POST' : 
+        if (recaptcha(request.form['g-recaptcha-response'])): #True
             id = request.form['username']
             mail = request.form['email']
             pwd1 = request.form['password1']
@@ -114,29 +117,43 @@ def register():
             return alertmsg('註冊成功，請回登入頁面開始使用！')
         else:
             return alertmsg('你是機器人？')
-    return  render_template ( 'register.html')
+    return render_template ( 'register.html')
 
 
 @app.route ( '/forget', methods = ['GET', 'POST'])    
 def forget():
-    google = {
-        'secret' : secretkey,
-        'response' : ''
-    }
-    return ""    
-    
-    
+    if request.method == 'POST' : 
+        if (recaptcha(request.form['g-recaptcha-response'])): #True
+            id = request.form['username']
+            if (20>=len(id)>=5):
+                pass
+            
+            return alertmsg('已寄出，請檢查信箱！')
+        else:
+            return alertmsg('你是機器人？')
+    return render_template('forget.html')
+
+
+
 def alertmsg(msg):
     return '''
     <script>
         alert(' ''' + msg + ''' ');
         window.history.go(-1);
     </script>'''
+    
+def recaptcha (response):
+    google = {
+        'secret' : secretkey,
+        'response' : ''
+    }
+    google['response'] = response
+    captcha = requests.post("https://www.google.com/recaptcha/api/siteverify", data = google)
+    if ('true' in captcha.text):
+        return True
+    else:
+        return False
 
-def db_search (id, password):
-    pass
-    
-    
 def creattable (name, json, language):
     if language is 0:
         timetable = json['TimetableTw']
@@ -217,6 +234,8 @@ def creattable (name, json, language):
 
 
 if __name__ == '__main__':
+    conn = sqlite3.connect('iecs.db')
+    curs = conn.cursor()
     #curs.execute('CREATE TABLE user(id VARCHAR(20) PRIMARY KEY, mail VARCHAR(40), pwd VARCHAR(20))')
     app.secret_key = '4g^gE)5G-/g{qagby@Ug+sC<'
     app.debug = True 
