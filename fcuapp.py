@@ -1,4 +1,4 @@
-# coding=utf-8
+﻿# coding=utf-8
 from flask import Flask,url_for,request,render_template,session,redirect,escape,send_from_directory
 import sqlite3
 import requests
@@ -9,7 +9,7 @@ import re
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'download'
-secretkey = '6LdGuRwUAAAAACwXQc-Vrq0vJVz8YbmuhW3XA6NP' #Google reCAPTCHA key
+secretkey = 'Google reCAPTCHA key'
 
 
 @app.route('/' , methods = ['GET', 'POST'])

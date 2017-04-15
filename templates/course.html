@@ -1,0 +1,17 @@
+﻿{% extends "layout.html" %}
+{% block body %}
+
+<div class="login">
+	<h2 align="center">FCU 搶課助手</h2>
+
+    <form action="" method="post">
+    	<input type="text" name="nid" placeholder="NID" required="required" />
+        <input type="password" name="pwd" placeholder="密碼" required="required" />
+        <input type="number" name="number" placeholder="選課代號" required="required" />
+        <p><button type="submit" class="btn btn-primary btn-block btn-large">我要搶</button><br/>
+
+        <label>本系統已加入NID驗證</label>
+        <img align="right" src={{ url_for('static', filename='img/nid.gif') }}/>
+    </form>
+</div>
+{% endblock %}

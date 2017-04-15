@@ -1,0 +1,21 @@
+﻿{% extends "layout.html" %}
+{% block body %}
+
+<div class="login">
+	<h2 align="center">FCU 課表產生器</h2>
+
+    <form action="" method="post">
+    	<input type="text" name="nid" placeholder="NID" required="required" />
+        <input type="password" name="pwd" placeholder="密碼" required="required" />
+        
+        <select size=1 name="language"> 
+            <option value="1" selected> 中文版
+            <option value="2"> English
+        </select>
+        <p><button type="submit" class="btn btn-primary btn-block btn-large">下載</button><br/>
+
+        <label>本系統已加入NID驗證</label>
+        <img align="right" src={{ url_for('static', filename='img/nid.gif') }}/>
+    </form>
+</div>
+{% endblock %}
