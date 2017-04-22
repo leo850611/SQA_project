@@ -279,12 +279,15 @@ fieldset
         <input id="password2" type="password" placeholder="確認密碼" name=password2 required>
         <label>請輸入5至20長度的使用者名稱及密碼，信箱僅為找回密碼之用</label>  
         <script src='https://www.google.com/recaptcha/api.js' async defer></script>
-        <div class=g-recaptcha data-sitekey='6LdGuRwUAAAAAGZmBJNNiYYaofqOO9I45e-LP8c_' ></div>
+        <div class=g-recaptcha data-sitekey='6Le7Lx0UAAAAABGVHLPna0o4u7bUx4U1TpUq-5bq' ></div>
     </fieldset>
     <fieldset id="actions">
         <input type="submit" id="submit" value="註冊">
         <a href="/login">登入</a><a href="/forget">忘記密碼</a>
     </fieldset>  
+    {% for message in get_flashed_messages() %}
+    <div class=flash align="center" style="color:red;">{{ message }}</div>
+    {% endfor %}
 </form>
 
 </body>

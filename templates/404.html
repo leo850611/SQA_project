@@ -3,9 +3,11 @@
 <html>
 <head>
 <link rel="shortcut icon" href="{{ url_for('static', filename='img/i.png')}}" /><link rel="icon" href="{{ url_for('static', filename='img/i.png')}}" />
-<title>逢甲小幫手</title>
+<title>404 Page Not Found | 逢甲小幫手</title>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=0.7" />
+<meta name="keywords" content="逢甲小幫手" />
+<meta name="description" content="致力開發逢甲大學相關網路應用，課表產生器、搶課助手...等服務。" />
 <style>
 
 html, body
@@ -28,7 +30,7 @@ body
 
 /*--------------------*/
 
-#forget
+#login
 {
     background-color: #fff;
     background-image: -webkit-gradient(linear, left top, left bottom, from(#fff), to(#eee));
@@ -37,12 +39,12 @@ body
     background-image: -ms-linear-gradient(top, #fff, #eee);
     background-image: -o-linear-gradient(top, #fff, #eee);
     background-image: linear-gradient(top, #fff, #eee);  
-    height: 280px;
+    height: 450px;
     width: 400px;
     margin: -150px 0 0 -230px;
     padding: 30px;
     position: absolute;
-    top: 50%;
+    top: 40%;
     left: 50%;
     z-index: 0;
     -moz-border-radius: 3px;
@@ -71,7 +73,7 @@ body
           0 7px 0 rgba(0, 0, 0, .2);
 }
 
-#forget:before
+#login:before
 {
     content: '';
     position: absolute;
@@ -267,22 +269,14 @@ fieldset
 
 <body>
 
-<form id="forget" action="" method="post">
-    <h1>忘記密碼</h1>
-    <p><label>請輸入您的使用者名稱，系統將把密碼傳至您的信箱</label>
-
-    <fieldset id="inputs">
-        <input id="username" type="text" placeholder="使用者名稱" name=username autofocus required>
-        <script src='https://www.google.com/recaptcha/api.js' async defer></script>
-        <div class=g-recaptcha data-sitekey='6Le7Lx0UAAAAABGVHLPna0o4u7bUx4U1TpUq-5bq' ></div>
+<form id="login" action="" method="post">
+    <h1>逢甲小幫手</h1>
+    <fieldset id="inputs" align="center" >
+        <h2>404 Page Not Found</h2>
+        <p><label>The page you were looking for doesn't exist.</label>
+        <p><img src={{ url_for('static', filename='img/blackman.jpg') }}/> 
     </fieldset>
-    <fieldset id="actions">
-        <input type="submit" id="submit" value="送出">
-        <a href="/login">登入</a><a href="/register">註冊</a>
-    </fieldset>
-    {% for message in get_flashed_messages() %}
-    <div class=flash align="center" style="color:red;">{{ message }}</div>
-    {% endfor %}
+    <a href="/about" id="back">關於本站</a>
 </form>
 
 </body>
