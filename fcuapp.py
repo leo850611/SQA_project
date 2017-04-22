@@ -1,15 +1,23 @@
-﻿# coding=utf-8
-from flask import Flask,url_for,request,render_template,session,redirect,escape,send_from_directory
+﻿#!/usr/bin/env python3
+# coding=utf-8
+from flask import Flask,url_for,request,render_template,session,redirect,escape,send_from_directory,flash
 import sqlite3
 import requests
 import json
 import re
+import smtplib
+from email.mime.text import MIMEText
+from email.header import Header
 
-## http://逢甲資訊.台灣/ Copyright (C) 2017 Leo Sheu.
+## 逢甲資訊.台灣 Copyright (C) 2017 Leo Sheu.
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'download'
-secretkey = 'Google reCAPTCHA key'
+
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+appkey = ''
+secretkey = 'Google reCAPTCHA key' 
+mailpassword = ''
 
 
 @app.route('/' , methods = ['GET', 'POST'])
@@ -47,6 +55,7 @@ def index():
     else:
         return redirect(url_for('login'))
 
+
 @app.route('/course' , methods = ['GET', 'POST'])
 def course():
     if ('username' in session) : 
@@ -55,39 +64,42 @@ def course():
         return 'Username : %s ' % escape(session['username']) + render_template('course.html')
     else:
         return redirect(url_for('login'))
-    
-@app.route ( '/about' ) 
+
+
+@app.route('/about') 
 def about(): 
     return render_template('about.html')
-    
-@app.route ( '/login', methods = ['GET', 'POST']) 
-def  login (): 
+
+
+@app.route('/login', methods = ['GET', 'POST']) 
+def login(): 
     if  request.method == 'POST' : 
         username = request.form['username'] 
         password = request.form['password']
+        print(username +' '+ password)
         if (20>=len(username)>=5) and (20>=len(password)>=5):
             conn = sqlite3.connect('iecs.db')
             curs = conn.cursor()
-
             curs.execute("SELECT pwd FROM user WHERE id=:id ", {"id": username})
-            
             pwddata = curs.fetchall()
             try:
                 pwd = str(pwddata[0])[2:-3]
+                if pwd == password:
+                    session['username'] = username
+                    return redirect(url_for('index'))
             except:
-                pwd = ''
-            if pwd == password:
-                session['username'] = username
-                return redirect(url_for('index'))
-    return render_template ('login.html')
+                pass
+            
+    return render_template('login.html')
 
-@app.route ( '/logout' ) 
-def logout (): 
+
+@app.route('/logout') 
+def logout(): 
     session.pop('username', None) 
     return redirect(url_for('login'))
 
-    
-@app.route ( '/register', methods = ['GET', 'POST'])    
+
+@app.route('/register', methods = ['GET', 'POST'])    
 def register():
     if request.method == 'POST' : 
         if (recaptcha(request.form['g-recaptcha-response'])): #True
@@ -97,42 +109,65 @@ def register():
             pwd2 = request.form['password2']
             
             if (pwd1 != pwd2):
-                return alertmsg('Error：兩次輸入密碼不一致')
+                flash('Error：兩次輸入密碼不一致')
+                return redirect(url_for('register'))
             if (len(id)<5) or (len(id)>20) or (len(pwd1)<5) or (len(pwd1)>20):
-                return alertmsg('Error：使用者名稱或密碼長度錯誤')
+                flash('Error：使用者名稱或密碼長度錯誤')
+                return redirect(url_for('register'))
             if (len(mail)<6) or (len(mail)>40):
-                return alertmsg('Error：email長度錯誤')
+                flash('Error：email長度錯誤')
+                return redirect(url_for('register'))
             if re.match("^.+\\@(\\[?)[a-zA-Z0-9\\-\\.]+\\.([a-zA-Z]{2,3}|[0-9]{1,3})(\\]?)$", mail) == None:
-                return alertmsg('Error：email格式錯誤')
+                flash('Error：無效的email格式')
+                return redirect(url_for('register'))
             
             conn = sqlite3.connect('iecs.db')
             curs = conn.cursor()
             try:
                 curs.execute('INSERT INTO user(id,mail,pwd) VALUES(?,?,?)', (id,mail,pwd1) )
             except:
-                return alertmsg('ERROR：使用者名稱已存在')
+                flash('ERROR：使用者名稱已存在')
+                return redirect(url_for('register'))
             conn.commit()
             curs.execute('SELECT * from user')
             print(curs.fetchall())
-            return alertmsg('註冊成功，請回登入頁面開始使用！')
+            flash('註冊成功，請回登入頁面開始使用！')
+            return redirect(url_for('register'))
         else:
-            return alertmsg('你是機器人？')
+            flash('你是機器人？')
+            return redirect(url_for('register'))
     return render_template ( 'register.html')
 
 
-@app.route ( '/forget', methods = ['GET', 'POST'])    
+@app.route('/forget', methods = ['GET', 'POST'])    
 def forget():
     if request.method == 'POST' : 
         if (recaptcha(request.form['g-recaptcha-response'])): #True
-            id = request.form['username']
-            if (20>=len(id)>=5):
-                pass
-            
-            return alertmsg('已寄出，請檢查信箱！')
+            username = request.form['username']
+            if (20>=len(username)>=5):
+                conn = sqlite3.connect('iecs.db')
+                curs = conn.cursor()
+                curs.execute("SELECT pwd FROM user WHERE id=:id ", {"id": username})
+                pwddata = curs.fetchall()
+                try:
+                    pwd = str(pwddata[0])[2:-3]
+                    curs.execute("SELECT mail FROM user WHERE id=:id ", {"id": username})
+                    mail = curs.fetchall()
+                    email = str(mail[0])[2:-3]
+                    sendmail(email, pwd)
+                except:
+                    pass
+                flash('已寄出，請檢查信箱！')
+                return redirect(url_for('forget'))
         else:
-            return alertmsg('你是機器人？')
+            flash('你是機器人？')
+            return redirect(url_for('forget'))
     return render_template('forget.html')
 
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
 
 
 def alertmsg(msg):
@@ -141,8 +176,8 @@ def alertmsg(msg):
         alert(' ''' + msg + ''' ');
         window.history.go(-1);
     </script>'''
-    
-def recaptcha (response):
+
+def recaptcha(response):
     google = {
         'secret' : secretkey,
         'response' : ''
@@ -154,7 +189,8 @@ def recaptcha (response):
     else:
         return False
 
-def creattable (name, json, language):
+
+def creattable(name, json, language):
     if language is 0:
         timetable = json['TimetableTw']
     else:
@@ -233,10 +269,30 @@ def creattable (name, json, language):
     f.close()
 
 
+def sendmail(recipient, password):
+    smtpObj = smtplib.SMTP_SSL('mail.gandi.net', 465)
+    smtpObj.ehlo()
+    smtpObj.login('no-reply@fcu.com.tw', mailpassword)
+    message = MIMEText('''
+    此為自動回覆電子郵件，將協助您恢復您對帳號的存取權限。
+
+    登入密碼：'''+ password + '''\n--
+    逢甲小幫手 - https://逢甲資訊.台灣''', 'plain', 'utf-8')
+    message['From'] = Header("no-reply@fcu.com.tw", 'utf-8')
+    message['To'] =  Header(recipient, 'utf-8') 
+    subject = '逢甲小幫手 忘記密碼'
+    message['Subject'] = Header(subject, 'utf-8')
+    smtpObj.sendmail('no-reply@fcu.com.tw', recipient, message.as_string() )
+    print('send mail: '+ recipient)
+    smtpObj.quit()
+
+
+
 if __name__ == '__main__':
     conn = sqlite3.connect('iecs.db')
     curs = conn.cursor()
     #curs.execute('CREATE TABLE user(id VARCHAR(20) PRIMARY KEY, mail VARCHAR(40), pwd VARCHAR(20))')
-    app.secret_key = '4g^gE)5G-/g{qagby@Ug+sC<'
-    app.debug = True 
+    app.secret_key = appkey
+    #app.debug = True 
     app.run(host = '0.0.0.0')
+    
