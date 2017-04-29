@@ -1,4 +1,3 @@
-﻿#!/usr/bin/env python3
 # coding=utf-8
 from flask import Flask,url_for,request,render_template,session,redirect,escape,send_from_directory,flash
 import sqlite3
@@ -165,6 +164,14 @@ def forget():
     return render_template('forget.html')
 
 
+@app.route('/106') 
+def analysis106():
+    if ('username' in session) :
+        return 'Username : %s ' % escape(session['username']) + render_template('106.html')
+    else:
+        return redirect(url_for('login'))
+
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
@@ -293,6 +300,6 @@ if __name__ == '__main__':
     curs = conn.cursor()
     #curs.execute('CREATE TABLE user(id VARCHAR(20) PRIMARY KEY, mail VARCHAR(40), pwd VARCHAR(20))')
     app.secret_key = appkey
-    #app.debug = True 
+    app.debug = True 
     app.run(host = '0.0.0.0')
     
