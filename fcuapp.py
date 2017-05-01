@@ -1,4 +1,4 @@
-﻿# coding=utf-8
+# coding=utf-8
 from flask import Flask,url_for,request,render_template,session,redirect,escape,send_from_directory,flash
 import sqlite3
 import requests
@@ -242,7 +242,8 @@ def autorenew(nid, password):
         'submit':'送出'
     }
     start = session.post("https://innopac.lib.fcu.edu.tw/patroninfo*cht", data = logininfo, headers = header)
-    books = session.get("https://innopac.lib.fcu.edu.tw/patroninfo~S9*cht/1128531/items")
+    bookurl = start.url[:-3] + 'items'
+    books = session.get(bookurl)
     if('請輸入密碼' in books.text):
         return ('帳號或密碼錯誤')
     else:
@@ -261,11 +262,11 @@ def autorenew(nid, password):
                     renew.setdefault(id[i]['id'], id[i]['value'])
                     flag = flag +1
             if flag > 0:
-                session.post("https://innopac.lib.fcu.edu.tw/patroninfo~S9*cht/1128531/items", data = renew, headers = header)
+                session.post(bookurl, data = renew, headers = header)
                 renew.pop('requestRenewSome')  
                 renew.setdefault('renewsome', '是')
-                result = session.post("https://innopac.lib.fcu.edu.tw/patroninfo~S9*cht/1128531/items", data = renew, headers = header)
-                if '<font color="red">' not in result.text:
+                result = session.post(bookurl, data = renew, headers = header)
+                if '並非所有圖書' not in result.text:
                     return ('成功續借' + str(flag) +'本書')
                 else:
                     return ('續借失敗，書籍將在5天內到期')
