@@ -242,7 +242,7 @@ def autorenew(nid, password):
         'submit':'送出'
     }
     start = session.post("https://innopac.lib.fcu.edu.tw/patroninfo*cht", data = logininfo, headers = header)
-    if('請輸入密碼' in books.text):
+    if('請輸入密碼' in start.text):
         return ('帳號或密碼錯誤')
     else:
         bookurl = start.url[:-3] + 'items'
