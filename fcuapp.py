@@ -1,9 +1,12 @@
-# coding=utf-8
+﻿# coding=utf-8
 from flask import Flask,url_for,request,render_template,session,redirect,escape,send_from_directory,flash
 import sqlite3
 import requests
 import json
 import re
+import time
+import datetime
+from bs4 import BeautifulSoup
 import smtplib
 from email.mime.text import MIMEText
 from email.header import Header
@@ -61,6 +64,23 @@ def course():
         if  request.method == 'POST' : 
             return alertmsg('尚未開放，敬請期待~')
         return 'Username : %s ' % escape(session['username']) + render_template('course.html')
+    else:
+        return redirect(url_for('login'))
+
+
+@app.route('/library' , methods = ['GET', 'POST'])
+def library():
+    if ('username' in session) : 
+        if  request.method == 'POST' : 
+            nid = request.form['nid']
+            password = request.form['pwd']
+            if (len(nid)>5):
+                flash(autorenew(nid, password))
+                return redirect(url_for('library'))
+            else:
+                flash('帳號或密碼錯誤')
+                return redirect(url_for('library'))
+        return 'Username : %s ' % escape(session['username']) + render_template('library.html')
     else:
         return redirect(url_for('login'))
 
@@ -196,6 +216,64 @@ def recaptcha(response):
     else:
         return False
 
+        
+def cleckday(datestr):
+    m = datestr.split('-')[0]
+    d = datestr.split('-')[1]
+    y = datestr.split('-')[2]
+    today = datetime.date.today()
+    other_day = datetime.date(int(y)+2000,int(m),int(d))
+    result = other_day - today
+    return result.days
+    
+def autorenew(nid, password):
+    header = {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Accept-Language': 'zh-TW,zh;q=0.8,en-US;q=0.6,en;q=0.4,ja;q=0.2',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36'
+    }
+    session = requests.Session()
+    if len(nid) == 8:
+        nid = nid + '0'
+    logininfo = {
+        'code': nid,
+        'pin': password,
+        'submit':'送出'
+    }
+    start = session.post("https://innopac.lib.fcu.edu.tw/patroninfo*cht", data = logininfo, headers = header)
+    books = session.get("https://innopac.lib.fcu.edu.tw/patroninfo~S9*cht/1128531/items")
+    if('請輸入密碼' in books.text):
+        return ('帳號或密碼錯誤')
+    else:
+        booksoup = BeautifulSoup(books.text, "html.parser")
+        day = booksoup.findAll('td',{'class':'patFuncStatus'})
+        id = booksoup.findAll('input',{'type':'checkbox'})
+        renew = {
+            'currentsortorder':'current_checkout',
+            'currentsortorder':'current_checkout',
+            'requestRenewSome':'續借選取館藏'
+        }
+        if len(day) !=0 :
+            flag = 0
+            for i in range(len(day)):
+                if cleckday(day[i].text.split(' ')[2]) <= 5:
+                    renew.setdefault(id[i]['id'], id[i]['value'])
+                    flag = flag +1
+            if flag > 0:
+                session.post("https://innopac.lib.fcu.edu.tw/patroninfo~S9*cht/1128531/items", data = renew, headers = header)
+                renew.pop('requestRenewSome')  
+                renew.setdefault('renewsome', '是')
+                result = session.post("https://innopac.lib.fcu.edu.tw/patroninfo~S9*cht/1128531/items", data = renew, headers = header)
+                if '<font color="red">' not in result.text:
+                    return ('成功續借' + str(flag) +'本書')
+                else:
+                    return ('續借失敗，書籍將在5天內到期')
+            else:
+                return ('您的書籍還不需續借')
+        else:
+            return ('您沒有任何館藏借出')
+
 
 def creattable(name, json, language):
     if language is 0:
@@ -292,7 +370,6 @@ def sendmail(recipient, password):
     smtpObj.sendmail('no-reply@fcu.com.tw', recipient, message.as_string() )
     print('send mail: '+ recipient)
     smtpObj.quit()
-
 
 
 if __name__ == '__main__':
