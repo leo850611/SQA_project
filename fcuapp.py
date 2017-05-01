@@ -1,4 +1,4 @@
-# coding=utf-8
+﻿# coding=utf-8
 from flask import Flask,url_for,request,render_template,session,redirect,escape,send_from_directory,flash
 import sqlite3
 import requests
@@ -242,11 +242,11 @@ def autorenew(nid, password):
         'submit':'送出'
     }
     start = session.post("https://innopac.lib.fcu.edu.tw/patroninfo*cht", data = logininfo, headers = header)
-    bookurl = start.url[:-3] + 'items'
-    books = session.get(bookurl)
     if('請輸入密碼' in books.text):
         return ('帳號或密碼錯誤')
     else:
+        bookurl = start.url[:-3] + 'items'
+        books = session.get(bookurl)
         booksoup = BeautifulSoup(books.text, "html.parser")
         day = booksoup.findAll('td',{'class':'patFuncStatus'})
         id = booksoup.findAll('input',{'type':'checkbox'})
