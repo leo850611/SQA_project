@@ -6,8 +6,7 @@
 <title>404 Page Not Found | 逢甲小幫手</title>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=0.7" />
-<meta name="keywords" content="逢甲小幫手" />
-<meta name="description" content="致力開發逢甲大學相關網路應用，課表產生器、搶課助手...等服務。" />
+
 <style>
 
 html, body
@@ -17,7 +16,7 @@ html, body
 
 body
 {
-    font: 12px 'Lucida Sans Unicode', 'Trebuchet MS', Arial, Helvetica;    
+    font: 12px Arial, '文泉驛正黑', Heiti TC, '微軟正黑體', sans-serif, 'Lucida Sans Unicode', 'Trebuchet MS', Helvetica;
     margin: 0;
     background-color: #d9dee2;
     background-image: -webkit-gradient(linear, left top, left bottom, from(#ebeef2), to(#d9dee2));
@@ -269,14 +268,15 @@ fieldset
 
 <body>
 
-<form id="login" action="" method="post">
-    <h1>逢甲小幫手</h1>
+<form id="login" action="">
+    <h1>EXPLOSION</h1>
     <fieldset id="inputs" align="center" >
         <h2>404 Page Not Found</h2>
         <p><label>The page you were looking for doesn't exist.</label>
-        <p><img src={{ url_for('static', filename='img/blackman.jpg') }}/> 
+        <p><iframe src="https://gifs.com/embed/xkzzoq" frameborder="0" scrolling="no" width='315' height='270' style="-webkit-backface-visibility: hidden;-webkit-transform: scale(1);"></iframe>
+        <!--<p><img src={{ url_for('static', filename='img/blackman.jpg') }}/>-->
     </fieldset>
-    <a href="/about" id="back">關於本站</a>
+    <a href="/about" id="back">About</a>
 </form>
 
 </body>
