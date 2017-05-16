@@ -266,10 +266,10 @@ def autorenew(nid, password):
                 renew.pop('requestRenewSome')  
                 renew.setdefault('renewsome', '是')
                 result = session.post(bookurl, data = renew, headers = header)
-                if '並非所有圖書' not in result.text:
-                    return ('成功續借' + str(flag) +'本書')
-                else:
+                if 'id="renewfailmsg" class="errormessage"' in result.text:
                     return ('續借失敗，書籍將在5天內到期')
+                else:
+                    return ('成功續借' + str(flag) +'本書')
             else:
                 return ('您的書籍還不需續借')
         else:
