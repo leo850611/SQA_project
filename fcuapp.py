@@ -1,4 +1,4 @@
-﻿# coding=utf-8
+# coding=utf-8
 from flask import Flask,url_for,request,render_template,session,redirect,escape,send_from_directory,flash
 import sqlite3
 import requests
@@ -266,7 +266,7 @@ def autorenew(nid, password):
                 renew.pop('requestRenewSome')  
                 renew.setdefault('renewsome', '是')
                 result = session.post(bookurl, data = renew, headers = header)
-                if 'id="renewfailmsg" class="errormessage"' in result.text:
+                if 'color="red"' in result.text:
                     return ('續借失敗，書籍將在5天內到期')
                 else:
                     return ('成功續借' + str(flag) +'本書')
