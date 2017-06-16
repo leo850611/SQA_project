@@ -299,6 +299,9 @@ fieldset
         <input type="submit" id="submit" value="登入">
         <a href="/register">註冊</a><a href="/forget">忘記密碼</a>
     </fieldset>
+    {% for message in get_flashed_messages() %}
+    <div class=flash align="center" style="color:red;">{{ message }}</div>
+    {% endfor %}
     <a href="/about" id="back">關於本站</a>
 </form>
 
