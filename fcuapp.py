@@ -108,7 +108,8 @@ def login():
                     return redirect(url_for('index'))
             except:
                 pass
-            
+        flash('使用者名稱或密碼錯誤，請重新輸入')
+        return redirect(url_for('login'))   
     return render_template('login.html')
 
 
@@ -378,6 +379,6 @@ if __name__ == '__main__':
     curs = conn.cursor()
     #curs.execute('CREATE TABLE user(id VARCHAR(20) PRIMARY KEY, mail VARCHAR(40), pwd VARCHAR(20))')
     app.secret_key = appkey
-    app.debug = True 
+    #app.debug = True 
     app.run(host = '0.0.0.0')
     
